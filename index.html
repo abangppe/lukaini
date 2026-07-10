@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Book Wound Dressing Service</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --primary: #0f766e;
+      --primary-dark: #0b5a54;
+      --bg: #f7faf9;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+    .card { max-width: 560px; margin: 0 auto; background: var(--card); border-radius: 14px; padding: 28px 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+    h1 { font-size: 20px; margin: 0 0 4px 0; color: var(--primary-dark); }
+    p.subtitle { margin: 0 0 20px 0; color: var(--muted); font-size: 14px; }
+    label { display: block; font-size: 13px; font-weight: 600; margin: 14px 0 4px 0; }
+    input, select, textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit; }
+    textarea { resize: vertical; min-height: 60px; }
+    .row { display: flex; gap: 12px; }
+    .row > div { flex: 1; }
+    .field-hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .estimate-box { margin-top: 20px; padding: 16px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px; }
+    .estimate-box .amount { font-size: 26px; font-weight: 700; color: var(--primary-dark); text-align: center; }
+    .estimate-box .note { font-size: 12px; color: var(--muted); margin-top: 6px; text-align: center; }
+    .breakdown { margin-top: 10px; font-size: 13px; border-top: 1px dashed #a7f3d0; padding-top: 10px; }
+    .breakdown div { display: flex; justify-content: space-between; padding: 2px 0; }
+    button { width: 100%; margin-top: 20px; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    button:hover:not(:disabled) { background: var(--primary-dark); }
+    #successMsg { display: none; text-align: center; padding: 30px 10px; }
+    #successMsg .icon { font-size: 40px; }
+    #errorMsg { display: none; color: #b91c1c; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 12px; font-size: 13px; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <div class="card" id="formCard">
+    <h1>Book In-Home Wound Dressing</h1>
+    <p class="subtitle">Fill in the details below. You'll see an instant estimated cost — the final cost is confirmed after in-person assessment.</p>
+
+    <form id="bookingForm">
+      <label>Full Name</label>
+      <input type="text" id="name" required>
+
+      <div class="row">
+        <div>
+          <label>Phone Number</label>
+          <input type="tel" id="phone" required>
+        </div>
+        <div>
+          <label>Email</label>
+          <input type="email" id="email" required>
+        </div>
+      </div>
+
+      <label>Home Address</label>
+      <textarea id="address" required placeholder="e.g. 12 Jalan Bunga, Taman Kajang Utama, 43000 Kajang, Selangor"></textarea>
+
+      <label>Distance from Masjid Jamek Pekan Kajang (km)</label>
+      <input type="number" id="distanceKm" min="0" step="0.1" placeholder="e.g. 8.5" required>
+      <div class="field-hint">Open Google Maps, get directions from your home to "Masjid Jamek Pekan Kajang", and enter the driving distance shown.</div>
+
+      <label>Upload Screenshot of the Google Maps Distance</label>
+      <input type="file" id="distanceScreenshot" accept="image/*" required>
+      <div class="field-hint" id="screenshotHint">This is how we verify the distance you entered above.</div>
+
+      <label>Preferred Date</label>
+      <select id="preferredDate" required>
+        <option value="">Loading available dates...</option>
+      </select>
+      <div class="field-hint">We only visit on Sunday, Tuesday, Thursday and Friday.</div>
+
+      <label>Preferred Time</label>
+      <select id="preferredTime" required>
+        <option value="">Select a date first</option>
+      </select>
+      <div class="field-hint" id="slotHint"></div>
+
+      <label>Wound Location / Type (e.g. Left foot diabetic ulcer)</label>
+      <input type="text" id="woundType" required>
+
+      <label>Approximate Wound Size</label>
+      <select id="size" required></select>
+
+      <label>Wound Depth</label>
+      <select id="depth" required></select>
+
+      <label>Dressing Type Needed (if known)</label>
+      <select id="dressing" required></select>
+
+      <label>Procedure Difficulty (best guess is fine)</label>
+      <select id="difficulty" required></select>
+
+      <label>Upload a Photo of the Wound (optional, helps us assess faster)</label>
+      <input type="file" id="photo" accept="image/*">
+
+      <div class="estimate-box">
+        <div class="amount" id="estimateAmount">RM --</div>
+        <div class="note">Estimated total - final cost confirmed on the day of service</div>
+        <div class="breakdown">
+          <div><span>Procedure cost</span><span id="procedureAmount">RM --</span></div>
+          <div><span>Distance (self-reported)</span><span id="distanceAmount">--</span></div>
+          <div><span>Travel fee</span><span id="travelAmount">RM --</span></div>
+        </div>
+      </div>
+
+      <div id="errorMsg"></div>
+      <button type="submit" id="submitBtn">Request Booking</button>
+    </form>
+  </div>
+
+  <div class="card" id="successMsg">
+    <div class="icon">✅</div>
+    <h1>Booking Request Sent!</h1>
+    <p class="subtitle" id="successDetail"></p>
+  </div>
+
+  <script>
+    // ======================================================================
+    // PASTE YOUR APPS SCRIPT WEB APP URL HERE (Deploy > New deployment > Web app)
+    // It looks like: https://script.google.com/macros/s/AKfycb.../exec
+    // ======================================================================
+    const SCRIPT_URL = 'PASTE_YOUR_WEB_APP_URL_HERE';
+
+    // GET-based calls (read-only): no CORS preflight, works cross-origin out of the box.
+    function apiGet(action, params) {
+      const query = new URLSearchParams(Object.assign({ action: action }, params || {}));
+      return fetch(SCRIPT_URL + '?' + query.toString())
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (data && data.error) throw new Error(data.error);
+          return data;
+        });
+    }
+
+    // POST-based call for submitBooking. IMPORTANT: do not set a custom
+    // Content-Type header - leaving it as the fetch default ('text/plain')
+    // keeps this a "simple request" so the browser skips the CORS
+    // preflight (which Apps Script web apps do not support).
+    function apiPost(action, payload) {
+      return fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: action, payload: payload }),
+      })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (data && data.error) throw new Error(data.error);
+          return data;
+        });
+    }
+
+    const fields = ['size', 'depth', 'dressing', 'difficulty', 'distanceKm'];
+
+    apiGet('getFormOptions').then(function(options) {
+      populateSelect('size', options.size);
+      populateSelect('depth', options.depth);
+      populateSelect('dressing', options.dressing);
+      populateSelect('difficulty', options.difficulty);
+      updateEstimate();
+    }).catch(showError);
+
+    apiGet('getAvailableDates').then(function(dates) {
+      const select = document.getElementById('preferredDate');
+      select.innerHTML = '';
+      if (!dates.length) {
+        select.innerHTML = '<option value="">No dates available</option>';
+        return;
+      }
+      const placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.textContent = 'Choose a date...';
+      select.appendChild(placeholder);
+      dates.forEach(function(d) {
+        const opt = document.createElement('option');
+        opt.value = d.value;
+        opt.textContent = d.label;
+        select.appendChild(opt);
+      });
+    }).catch(showError);
+
+    document.getElementById('preferredDate').addEventListener('change', function() {
+      const dateVal = this.value;
+      const timeSelect = document.getElementById('preferredTime');
+      const slotHint = document.getElementById('slotHint');
+      timeSelect.innerHTML = '<option value="">Loading times...</option>';
+      slotHint.textContent = '';
+      if (!dateVal) return;
+
+      apiGet('getAvailableSlots', { date: dateVal }).then(function(slots) {
+        timeSelect.innerHTML = '';
+        if (!slots.length) {
+          timeSelect.innerHTML = '<option value="">Fully booked - pick another date</option>';
+          slotHint.textContent = 'All slots on this date are taken. Please choose a different date.';
+          return;
+        }
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'Choose a time...';
+        timeSelect.appendChild(placeholder);
+        slots.forEach(function(slot) {
+          const opt = document.createElement('option');
+          opt.value = slot;
+          opt.textContent = slot;
+          timeSelect.appendChild(opt);
+        });
+        slotHint.textContent = slots.length + ' slot(s) available on this date.';
+      }).catch(showError);
+    });
+
+    function populateSelect(id, items) {
+      const select = document.getElementById(id);
+      select.innerHTML = '';
+      items.forEach(function(item) {
+        const opt = document.createElement('option');
+        opt.value = item;
+        opt.textContent = item;
+        select.appendChild(opt);
+      });
+    }
+
+    fields.forEach(function(id) {
+      document.addEventListener('change', function(e) {
+        if (e.target && e.target.id === id) updateEstimate();
+      });
+    });
+
+    document.getElementById('distanceKm').addEventListener('input', updateEstimate);
+
+    let emailDebounce = null;
+    document.getElementById('email').addEventListener('input', function() {
+      clearTimeout(emailDebounce);
+      const email = this.value;
+      emailDebounce = setTimeout(function() {
+        if (!email || email.indexOf('@') === -1) return;
+        apiGet('isReturningClient', { email: email }).then(function(result) {
+          const screenshotInput = document.getElementById('distanceScreenshot');
+          const screenshotHint = document.getElementById('screenshotHint');
+          if (result.isReturning) {
+            screenshotInput.required = false;
+            screenshotHint.textContent = 'Optional for returning clients - upload a new one only if your address/distance changed.';
+          } else {
+            screenshotInput.required = true;
+            screenshotHint.textContent = 'This is how we verify the distance you entered above.';
+          }
+        }).catch(function() { /* fail silently, keep default required behavior */ });
+      }, 600);
+    });
+
+    function currentFormData() {
+      return {
+        size: document.getElementById('size').value,
+        depth: document.getElementById('depth').value,
+        dressing: document.getElementById('dressing').value,
+        difficulty: document.getElementById('difficulty').value,
+        distanceKm: document.getElementById('distanceKm').value,
+      };
+    }
+
+    function updateEstimate() {
+      apiGet('getEstimate', currentFormData()).then(function(result) {
+        document.getElementById('estimateAmount').textContent = 'RM ' + result.estimatedCost.toFixed(2);
+        document.getElementById('procedureAmount').textContent = 'RM ' + result.procedureCost.toFixed(2);
+        document.getElementById('travelAmount').textContent = 'RM ' + result.travelFee.toFixed(2);
+        document.getElementById('distanceAmount').textContent =
+          (result.distanceKm !== null && result.distanceKm !== undefined) ? result.distanceKm + ' km' : '--';
+      }).catch(showError);
+    }
+
+    function showError(err) {
+      const errorMsg = document.getElementById('errorMsg');
+      errorMsg.textContent = err.message;
+      errorMsg.style.display = 'block';
+    }
+
+    document.getElementById('bookingForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const submitBtn = document.getElementById('submitBtn');
+      const errorMsg = document.getElementById('errorMsg');
+      errorMsg.style.display = 'none';
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+
+      const photoInput = document.getElementById('photo');
+      const screenshotInput = document.getElementById('distanceScreenshot');
+
+      const readFile = function(input) {
+        return new Promise(function(resolve) {
+          if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+              resolve({ data: evt.target.result, name: input.files[0].name });
+            };
+            reader.readAsDataURL(input.files[0]);
+          } else {
+            resolve({ data: '', name: '' });
+          }
+        });
+      };
+
+      Promise.all([readFile(photoInput), readFile(screenshotInput)]).then(function(results) {
+        const woundPhoto = results[0];
+        const distanceScreenshot = results[1];
+
+        const formData = Object.assign(currentFormData(), {
+          name: document.getElementById('name').value,
+          phone: document.getElementById('phone').value,
+          email: document.getElementById('email').value,
+          address: document.getElementById('address').value,
+          preferredDate: document.getElementById('preferredDate').value,
+          preferredTime: document.getElementById('preferredTime').value,
+          woundType: document.getElementById('woundType').value,
+          photoData: woundPhoto.data,
+          photoName: woundPhoto.name,
+          distanceScreenshotData: distanceScreenshot.data,
+          distanceScreenshotName: distanceScreenshot.name,
+        });
+
+        apiPost('submitBooking', formData).then(function(result) {
+          document.getElementById('formCard').style.display = 'none';
+          document.getElementById('successMsg').style.display = 'block';
+          document.getElementById('successDetail').textContent =
+            'Reference: ' + result.bookingId + '. Estimated total cost: RM ' + result.estimatedCost.toFixed(2) +
+            '. We will email you a confirmation shortly.';
+        }).catch(function(err) {
+          errorMsg.textContent = err.message;
+          errorMsg.style.display = 'block';
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Request Booking';
+          if (err.message && err.message.indexOf('slot') !== -1) {
+            document.getElementById('preferredDate').dispatchEvent(new Event('change'));
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
