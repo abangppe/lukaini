@@ -314,13 +314,26 @@
       });
     }
 
-    function apiPost(action, formData) {
-      formData.append('action', action);
-      return fetch(SCRIPT_URL, { method: 'POST', body: formData }).then(function(res) {
+    function apiPost(action, payload) {
+      return fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: action, payload: payload })
+      }).then(function(res) {
         return res.json();
       }).then(function(json) {
         if (json && json.error) throw new Error(json.error);
         return json;
+      });
+    }
+
+    // Reads a File object into a base64 data URL string (what submitBooking
+    // expects for photoData / distanceScreenshotData on the backend).
+    function readFileAsBase64(file) {
+      return new Promise(function(resolve, reject) {
+        const reader = new FileReader();
+        reader.onload = function() { resolve(reader.result); };
+        reader.onerror = function() { reject(new Error('Could not read file: ' + file.name)); };
+        reader.readAsDataURL(file);
       });
     }
 
@@ -333,20 +346,21 @@
     // ----------------------------------------------------------------------
     // Initial data loads
     // ----------------------------------------------------------------------
-    populateSelect('size', ['Small (< 2cm)', 'Medium (2-5cm)', 'Large (5-10cm)', 'Very large (> 10cm)']);
-    populateSelect('depth', ['Superficial', 'Partial thickness', 'Full thickness', 'Deep / exposed structures']);
-    populateSelect('dressing', ['Not sure - let the nurse decide', 'Basic gauze dressing', 'Foam dressing', 'Hydrocolloid dressing', 'Alginate dressing', 'Other / special dressing']);
-
+    // Size/depth/dressing options must come from the backend's PriceConfig
+    // sheet (via getFormOptions) rather than being hardcoded here, otherwise
+    // the values sent won't match anything in the price table and pricing
+    // will silently compute as 0 / a 1x multiplier.
+    apiGet('getFormOptions').then(function(options) {
+      populateSelect('size', options.size || []);
+      populateSelect('depth', options.depth || []);
+      populateSelect('dressing', options.dressing || []);
+      updateEstimate();
+    }).catch(showError);
 
     [document.getElementById('size'), document.getElementById('depth'), document.getElementById('dressing'), document.getElementById('distanceKm')].forEach(function(el) {
       el.addEventListener('input', updateEstimate);
       el.addEventListener('change', updateEstimate);
     });
-
-    apiGet('getPricing').then(function(pricing) {
-      window.__pricing = pricing;
-      updateEstimate();
-    }).catch(showError);
 
     let lastDatesData = null;
     document.getElementById('preferredDate').dataset.loaded = '0';
@@ -439,11 +453,10 @@
     [document.getElementById('phone'), document.getElementById('email')].forEach(function(el) {
       el.addEventListener('input', function() {
         clearTimeout(returningCheckTimer);
-        const phone = document.getElementById('phone').value.trim();
         const email = document.getElementById('email').value.trim();
-        if (!phone && !email) return;
+        if (!email) return;
         returningCheckTimer = setTimeout(function() {
-          apiGet('checkReturningClient', { phone: phone, email: email }).then(function(result) {
+          apiGet('isReturningClient', { email: email }).then(function(result) {
             const screenshotInput = document.getElementById('distanceScreenshot');
             const screenshotHint = document.getElementById('screenshotHint');
             if (result.isReturning) {
@@ -461,31 +474,28 @@
     });
 
     // ----------------------------------------------------------------------
-    // Estimate calculation
+    // Estimate calculation (asks the backend, since PriceConfig lives there)
     // ----------------------------------------------------------------------
+    let estimateTimer = null;
     function updateEstimate() {
-      if (!window.__pricing) return;
-      const pricing = window.__pricing;
       const size = document.getElementById('size').value;
       const depth = document.getElementById('depth').value;
       const dressing = document.getElementById('dressing').value;
-      const distanceKm = parseFloat(document.getElementById('distanceKm').value) || 0;
+      const distanceKm = document.getElementById('distanceKm').value;
 
-      // (Assumes pricing object supplies whatever computation logic the backend defines;
-      // left exactly as in the original implementation.)
-      let procedureCost = pricing.base || 0;
-      if (pricing.size && pricing.size[size]) procedureCost += pricing.size[size];
-      if (pricing.depth && pricing.depth[depth]) procedureCost += pricing.depth[depth];
-      if (pricing.dressing && pricing.dressing[dressing]) procedureCost += pricing.dressing[dressing];
+      if (!size || !depth || !dressing) return;
 
-      const travelFee = (pricing.travelPerKm || 0) * distanceKm;
-      const total = procedureCost + travelFee;
-
-      document.getElementById('procedureAmount').textContent = 'RM ' + procedureCost.toFixed(2);
-      document.getElementById('distanceAmount').textContent = distanceKm ? distanceKm.toFixed(1) + ' km' : '--';
-      document.getElementById('travelAmount').textContent = 'RM ' + travelFee.toFixed(2);
-      document.getElementById('estimateAmount').textContent = 'RM ' + total.toFixed(2);
+      clearTimeout(estimateTimer);
+      estimateTimer = setTimeout(function() {
+        apiGet('getEstimate', { size: size, depth: depth, dressing: dressing, distanceKm: distanceKm }).then(function(result) {
+          document.getElementById('procedureAmount').textContent = 'RM ' + result.procedureCost.toFixed(2);
+          document.getElementById('distanceAmount').textContent = result.distanceKm ? Number(result.distanceKm).toFixed(1) + ' km' : '--';
+          document.getElementById('travelAmount').textContent = 'RM ' + result.travelFee.toFixed(2);
+          document.getElementById('estimateAmount').textContent = 'RM ' + result.estimatedCost.toFixed(2);
+        }).catch(showError);
+      }, 400);
     }
+
 
     // ----------------------------------------------------------------------
     // Form submit
@@ -501,36 +511,56 @@
       const photoInput = document.getElementById('photo');
       const screenshotInput = document.getElementById('distanceScreenshot');
 
-      const formData = new FormData();
-      formData.append('name', document.getElementById('name').value);
-      formData.append('phone', document.getElementById('phone').value);
-      formData.append('email', document.getElementById('email').value);
-      formData.append('address', document.getElementById('address').value);
-      formData.append('distanceKm', document.getElementById('distanceKm').value);
-      formData.append('preferredDate', document.getElementById('preferredDate').value);
-      formData.append('preferredTime', document.getElementById('preferredTime').value);
-      formData.append('woundType', document.getElementById('woundType').value);
-      formData.append('size', document.getElementById('size').value);
-      formData.append('depth', document.getElementById('depth').value);
-      formData.append('dressing', document.getElementById('dressing').value);
-      formData.append('estimatedCost', document.getElementById('estimateAmount').textContent.replace('RM', '').trim());
+      const payload = {
+        name: document.getElementById('name').value,
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value,
+        address: document.getElementById('address').value,
+        distanceKm: document.getElementById('distanceKm').value,
+        preferredDate: document.getElementById('preferredDate').value,
+        preferredTime: document.getElementById('preferredTime').value,
+        woundType: document.getElementById('woundType').value,
+        size: document.getElementById('size').value,
+        depth: document.getElementById('depth').value,
+        dressing: document.getElementById('dressing').value
+      };
 
-      if (screenshotInput.files[0]) formData.append('distanceScreenshot', screenshotInput.files[0]);
-      if (photoInput.files[0]) formData.append('photo', photoInput.files[0]);
-
-      apiPost('submitBooking', formData).then(function(result) {
-        document.getElementById('formCard').style.display = 'none';
-        document.getElementById('successMsg').style.display = 'block';
-        document.getElementById('successDetail').textContent = t('successDetail')(result.bookingId, result.estimatedCost);
-      }).catch(function(err) {
-        errorMsg.textContent = err.message;
-        errorMsg.style.display = 'block';
-        submitBtn.disabled = false;
-        submitBtn.textContent = t('submitBtn');
-        if (err.message && err.message.indexOf('slot') !== -1) {
-          document.getElementById('preferredDate').dispatchEvent(new Event('change'));
-        }
-      });
+      // Backend expects file contents as base64 data URLs (photoData /
+      // distanceScreenshotData), not raw multipart file parts.
+      Promise.resolve()
+        .then(function() {
+          if (screenshotInput.files[0]) {
+            payload.distanceScreenshotName = screenshotInput.files[0].name;
+            return readFileAsBase64(screenshotInput.files[0]).then(function(data) {
+              payload.distanceScreenshotData = data;
+            });
+          }
+        })
+        .then(function() {
+          if (photoInput.files[0]) {
+            payload.photoName = photoInput.files[0].name;
+            return readFileAsBase64(photoInput.files[0]).then(function(data) {
+              payload.photoData = data;
+            });
+          }
+        })
+        .then(function() {
+          return apiPost('submitBooking', payload);
+        })
+        .then(function(result) {
+          document.getElementById('formCard').style.display = 'none';
+          document.getElementById('successMsg').style.display = 'block';
+          document.getElementById('successDetail').textContent = t('successDetail')(result.bookingId, result.estimatedCost);
+        })
+        .catch(function(err) {
+          errorMsg.textContent = err.message;
+          errorMsg.style.display = 'block';
+          submitBtn.disabled = false;
+          submitBtn.textContent = t('submitBtn');
+          if (err.message && err.message.indexOf('slot') !== -1) {
+            document.getElementById('preferredDate').dispatchEvent(new Event('change'));
+          }
+        });
     });
 
     // Initialize static translations on load (defaults to English).
