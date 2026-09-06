@@ -137,7 +137,7 @@
     // We can't derive this from window.location because Apps Script serves HTML pages inside a
     // sandboxed googleusercontent.com iframe, not from the exec URL itself - fetching that iframe's
     // own address just returns this HTML page again, which is why POSTs were failing.
-    const BASE_URL = 'https://script.google.com/macros/s/AKfycbyNa1KZAipbxc0cT6S9Nkqr85EQQmWeN6RDuAi6Yg_kUxf8575Hk_lx7jQT3AXC4IbT7Q/exec';
+    const BASE_URL = 'PASTE_YOUR_WEB_APP_EXEC_URL_HERE';
     let pin = '';
     let formOptions = null;
 
@@ -251,7 +251,11 @@
     function optionsHtml(items, selectedFallback) {
       let html = '<option value="">Select...</option>';
       (items || []).forEach(function(item) {
-        html += '<option value="' + esc(item) + '">' + esc(item) + '</option>';
+        // getFormOptions now returns {value, labelEn, labelMs}; plain strings
+        // are still handled so this keeps working against an older deployment.
+        const value = (typeof item === 'string') ? item : item.value;
+        const label = (typeof item === 'string') ? item : (item.labelEn || item.value);
+        html += '<option value="' + esc(value) + '">' + esc(label) + '</option>';
       });
       return html;
     }
@@ -446,6 +450,10 @@
       document.getElementById('rec_sessionCount').value = '10';
       document.getElementById('rec_frequency').value = '1';
     }
+  </script>
+</body>
+</html>
+
   </script>
 </body>
 </html>
