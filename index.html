@@ -115,6 +115,30 @@ h1, h2, h3, b, strong { font-family: var(--font-display); }
   text-transform: uppercase; background: none; border: 0; padding: 0;
 }
 
+/* ================= BRAND MOTTO BAND ================= */
+.motto-band {
+  position: relative; padding: 86px 0; text-align: center; overflow: hidden;
+  background: var(--grad-soft);
+  border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft);
+}
+.motto-band::before,
+.motto-band::after {
+  /* Quote glyphs sit far back as texture, not decoration competing with the words */
+  content: '"'; position: absolute; font-family: var(--font-display); font-weight: 800;
+  font-size: 200px; line-height: 1; color: var(--purple); opacity: 0.06; pointer-events: none;
+}
+.motto-band::before { top: 6px; left: 4%; }
+.motto-band::after { bottom: -66px; right: 4%; }
+.motto-text {
+  position: relative; margin: 0; font-family: var(--font-display); font-weight: 800;
+  font-size: clamp(26px, 4.4vw, 44px); line-height: 1.22; letter-spacing: -0.03em;
+  background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.motto-gloss {
+  position: relative; margin: 16px auto 0; max-width: 460px;
+  font-size: 13.5px; color: var(--muted); line-height: 1.6; font-style: italic;
+}
+
 /* ================= FEATURES ================= */
 .section { padding: 96px 0; }
 .section-heading { font-size: 34px; margin: 10px 0 40px; font-weight: 800; color: var(--ink); letter-spacing: -0.025em; line-height: 1.15; }
@@ -131,9 +155,9 @@ h1, h2, h3, b, strong { font-family: var(--font-display); }
 }
 .feature-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
 .feature-card:hover::after { opacity: 1; }
-/* Illustrated art panel at the top of each feature card.
-   Drop-in point for real photography later: replace the inner <svg> with
-   <img class="feature-art-img" src="..."> and it will inherit the same frame. */
+/* Photo panel at the top of each feature card. Images live in /images and are
+   pre-cropped to 200:130 at 2x (800x520) for retina, so object-fit just guards
+   against any future image with a slightly different ratio. */
 .feature-art {
   border-radius: 14px; overflow: hidden; margin-bottom: 18px; line-height: 0;
   transition: transform 0.4s var(--ease);
@@ -400,6 +424,17 @@ button.primary-btn:active:not(:disabled) { transform: translateY(0) scale(0.98);
 @keyframes drawCheck { to { stroke-dashoffset: 0; } }
 #successMsg h1 { font-size: 26px; margin-bottom: 10px; }
 #successMsg .subtitle { max-width: 380px; margin: 0 auto; }
+/* Motto on the confirmation screen - the emotional peak of the flow, where
+   someone has just trusted us with a wound and their address. Kept quiet. */
+.success-motto {
+  position: relative; margin: 30px auto 0; padding-top: 24px; max-width: 320px;
+  font-family: var(--font-display); font-weight: 700; font-size: 16px; letter-spacing: -0.015em;
+  background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.success-motto::before {
+  content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 46px; height: 2px; border-radius: 2px; background: var(--grad); opacity: 0.45;
+}
 #errorMsg { display: none; color: var(--danger); background: var(--danger-bg); border: 1px solid var(--danger-line); border-radius: 11px; padding: 11px 14px; font-size: 13px; margin-top: 12px; line-height: 1.45; }
 
 /* Review step summary */
@@ -458,6 +493,7 @@ button.primary-btn:active:not(:disabled) { transform: translateY(0) scale(0.98);
   .hero-heading { font-size: 44px; }
   .section { padding: 68px 0; }
   .trust-section { padding: 64px 0; }
+  .motto-band { padding: 64px 0; }
   .features-grid, .how-grid { grid-template-columns: 1fr 1fr; }
   .nav-links { display: none; }
 }
@@ -471,6 +507,8 @@ button.primary-btn:active:not(:disabled) { transform: translateY(0) scale(0.98);
   .how-card { min-height: 0; }
   .option-cards { grid-template-columns: repeat(3, 1fr); }
   .section, .trust-section { padding: 52px 0; }
+  .motto-band { padding: 52px 0; }
+  .motto-band::before, .motto-band::after { font-size: 120px; }
   .row { grid-template-columns: 1fr; }
   .hero-actions .btn { width: 100%; }
 }
@@ -525,66 +563,44 @@ button.primary-btn:active:not(:disabled) { transform: translateY(0) scale(0.98);
       </section>
     </div>
 
+    <!-- ============ BRAND MOTTO BAND ============
+         Deliberately NOT translated - a motto is a brand asset, not content.
+         Keeping it in Malay also signals a local Malaysian service. -->
+    <section class="motto-band reveal" aria-label="Lukaini motto">
+      <div class="wrap">
+        <p class="motto-text">Luka Kamu, Luka Kami Jua</p>
+        <p class="motto-gloss" data-i18n="mottoGloss">Your wound is our wound too — we treat it like it's our own.</p>
+      </div>
+    </section>
+
     <!-- ============ FEATURES ============ -->
     <section class="section wrap reveal">
       <div class="features-grid stagger">
 
         <div class="feature-card">
-          <!-- Illustration: home visit. Swap this <svg> for an <img> of a real home visit when photography is available. -->
           <div class="feature-art">
-            <svg viewBox="0 0 200 130" fill="none" aria-hidden="true">
-              <rect width="200" height="130" rx="14" fill="url(#gA)"/>
-              <path d="M56 68 100 36l44 32" stroke="var(--purple)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M66 62v38a3 3 0 0 0 3 3h62a3 3 0 0 0 3-3V62" stroke="var(--purple)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M90 103V82h20v21" stroke="var(--teal)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-              <circle cx="152" cy="44" r="13" fill="#fff" stroke="var(--teal)" stroke-width="2.5"/>
-              <path d="M152 38v12M146 44h12" stroke="var(--teal)" stroke-width="2.5" stroke-linecap="round"/>
-              <defs><linearGradient id="gA" x1="0" y1="0" x2="200" y2="130"><stop stop-color="#f1ecff"/><stop offset="1" stop-color="#e9fbf5"/></linearGradient></defs>
-            </svg>
+            <img class="feature-art-img" src="images/home-visits.jpg" alt="A wound care provider arriving at a client&#39;s front door, greeted by an elderly resident" loading="lazy" width="800" height="520">
           </div>
           <b data-i18n="feature1Title">Home Visits</b><small data-i18n="feature1Text">Care at your doorstep</small>
         </div>
 
         <div class="feature-card">
-          <!-- Illustration: professional / certified care -->
           <div class="feature-art">
-            <svg viewBox="0 0 200 130" fill="none" aria-hidden="true">
-              <rect width="200" height="130" rx="14" fill="url(#gB)"/>
-              <path d="M100 28 66 41v25c0 21 15 36 34 44 19-8 34-23 34-44V41Z" fill="#fff" stroke="var(--purple)" stroke-width="3" stroke-linejoin="round"/>
-              <path d="M100 58v26M87 71h26" stroke="var(--teal)" stroke-width="4" stroke-linecap="round"/>
-              <defs><linearGradient id="gB" x1="0" y1="0" x2="200" y2="130"><stop stop-color="#e9fbf5"/><stop offset="1" stop-color="#f1ecff"/></linearGradient></defs>
-            </svg>
+            <img class="feature-art-img" src="images/professional-care.jpg" alt="Gloved hands laying out sterile gauze, scissors and antiseptic on a clean dressing tray" loading="lazy" width="800" height="520">
           </div>
           <b data-i18n="feature2Title">Professional Care</b><small data-i18n="feature2Text">Certified &amp; experienced</small>
         </div>
 
         <div class="feature-card">
-          <!-- Illustration: personalized plan / recovery progress -->
           <div class="feature-art">
-            <svg viewBox="0 0 200 130" fill="none" aria-hidden="true">
-              <rect width="200" height="130" rx="14" fill="url(#gC)"/>
-              <rect x="52" y="30" width="96" height="72" rx="10" fill="#fff" stroke="var(--purple)" stroke-width="3"/>
-              <path d="M66 50h34M66 64h48M66 78h26" stroke="var(--teal)" stroke-width="4" stroke-linecap="round"/>
-              <circle cx="140" cy="86" r="17" fill="#fff" stroke="var(--teal)" stroke-width="3"/>
-              <path d="m132 86 6 6 11-12" stroke="var(--teal)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
-              <defs><linearGradient id="gC" x1="0" y1="0" x2="200" y2="130"><stop stop-color="#f1ecff"/><stop offset="1" stop-color="#e9fbf5"/></linearGradient></defs>
-            </svg>
+            <img class="feature-art-img" src="images/personalized-plans.jpg" alt="A wound care provider sitting beside an elderly client, reviewing a care plan together on a tablet" loading="lazy" width="800" height="520">
           </div>
           <b data-i18n="feature3Title">Personalized Plans</b><small data-i18n="feature3Text">Built around your needs</small>
         </div>
 
         <div class="feature-card">
-          <!-- Illustration: transparent upfront pricing -->
           <div class="feature-art">
-            <svg viewBox="0 0 200 130" fill="none" aria-hidden="true">
-              <rect width="200" height="130" rx="14" fill="url(#gD)"/>
-              <rect x="46" y="36" width="108" height="62" rx="10" fill="#fff" stroke="var(--purple)" stroke-width="3"/>
-              <path d="M46 56h108" stroke="var(--purple)" stroke-width="3"/>
-              <path d="M62 74h30M62 86h18" stroke="var(--teal)" stroke-width="4" stroke-linecap="round"/>
-              <circle cx="126" cy="80" r="15" fill="#e9fbf5" stroke="var(--teal)" stroke-width="3"/>
-              <path d="M126 72v16M121 76.5h7.5a3.5 3.5 0 0 1 0 7h-5a3.5 3.5 0 0 0 0 7H131" stroke="var(--teal)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-              <defs><linearGradient id="gD" x1="0" y1="0" x2="200" y2="130"><stop stop-color="#e9fbf5"/><stop offset="1" stop-color="#f1ecff"/></linearGradient></defs>
-            </svg>
+            <img class="feature-art-img" src="images/transparent-pricing.jpg" alt="A person checking a cost estimate on their phone at home before booking" loading="lazy" width="800" height="520">
           </div>
           <b data-i18n="feature4Title">Transparent Pricing</b><small data-i18n="feature4Text">Get an upfront estimate before you book</small>
         </div>
@@ -834,7 +850,7 @@ button.primary-btn:active:not(:disabled) { transform: translateY(0) scale(0.98);
       </form>
 
       <!-- Replace 60123456789 below with your real WhatsApp number (country code, no + or spaces) -->
-      <a class="whatsapp-inline" href="https://wa.me/60183621446?text=Hi%2C%20I%27d%20like%20to%20book%20a%20wound%20dressing%20appointment" target="_blank" rel="noopener">
+      <a class="whatsapp-inline" href="https://wa.me/60123456789?text=Hi%2C%20I%27d%20like%20to%20book%20a%20wound%20dressing%20appointment" target="_blank" rel="noopener">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.48 1.32 5l-1.4 5.12 5.24-1.37c1.46.8 3.1 1.22 4.75 1.22h.01c5.46 0 9.9-4.45 9.9-9.91C21.95 6.45 17.5 2 12.04 2Zm5.8 14.16c-.24.68-1.4 1.32-1.93 1.4-.5.08-1.1.11-1.78-.11-.41-.13-.94-.31-1.62-.6-2.85-1.23-4.71-4.1-4.85-4.29-.14-.19-1.16-1.54-1.16-2.94 0-1.4.73-2.09.99-2.37.26-.28.57-.35.76-.35h.55c.18 0 .41-.07.64.49.24.58.81 2 .88 2.14.07.14.12.31.02.5-.09.19-.14.31-.28.48-.14.16-.29.36-.42.49-.14.14-.28.29-.12.57.16.28.71 1.18 1.53 1.91 1.05.94 1.94 1.23 2.22 1.37.28.14.44.12.6-.07.16-.19.68-.79.86-1.06.19-.28.37-.23.62-.14.26.09 1.63.77 1.91.91.28.14.47.21.54.33.07.12.07.68-.17 1.36Z"/></svg>
         <span data-i18n="whatsappInlineText">Prefer WhatsApp? Chat with us instead</span>
       </a>
@@ -844,13 +860,14 @@ button.primary-btn:active:not(:disabled) { transform: translateY(0) scale(0.98);
     <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
     <h1 data-i18n="successTitle">Booking Request Sent!</h1>
     <p class="subtitle" id="successDetail"></p>
+    <p class="success-motto">Luka Kamu, Luka Kami Jua</p>
     </div>
       </div>
     </div>
   </div>
 
   <!-- Replace 60123456789 below with your real WhatsApp number (country code, no + or spaces) -->
-  <a class="whatsapp-fab" href="https://wa.me/60183621446?text=Hi%2C%20I%27d%20like%20to%20book%20a%20wound%20dressing%20appointment" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
+  <a class="whatsapp-fab" href="https://wa.me/60123456789?text=Hi%2C%20I%27d%20like%20to%20book%20a%20wound%20dressing%20appointment" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
     <svg viewBox="0 0 24 24" fill="#ffffff" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.48 1.32 5l-1.4 5.12 5.24-1.37c1.46.8 3.1 1.22 4.75 1.22h.01c5.46 0 9.9-4.45 9.9-9.91C21.95 6.45 17.5 2 12.04 2Zm5.8 14.16c-.24.68-1.4 1.32-1.93 1.4-.5.08-1.1.11-1.78-.11-.41-.13-.94-.31-1.62-.6-2.85-1.23-4.71-4.1-4.85-4.29-.14-.19-1.16-1.54-1.16-2.94 0-1.4.73-2.09.99-2.37.26-.28.57-.35.76-.35h.55c.18 0 .41-.07.64.49.24.58.81 2 .88 2.14.07.14.12.31.02.5-.09.19-.14.31-.28.48-.14.16-.29.36-.42.49-.14.14-.28.29-.12.57.16.28.71 1.18 1.53 1.91 1.05.94 1.94 1.23 2.22 1.37.28.14.44.12.6-.07.16-.19.68-.79.86-1.06.19-.28.37-.23.62-.14.26.09 1.63.77 1.91.91.28.14.47.21.54.33.07.12.07.68-.17 1.36Z"/></svg>
   </a>
 
@@ -858,7 +875,7 @@ button.primary-btn:active:not(:disabled) { transform: translateY(0) scale(0.98);
     // ======================================================================
     // CONFIG
     // ======================================================================
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbweoaxLu8KyNabN8pPmmvSpxeNWtDobD2lB0jtRZi-NZjRPvMmaIoRaP0xkaAJ-fwcCAg/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwOOWFEooLfJ8fYJVznA5qzerO58kN2lh2AccxzY1nW5C1e4qcXGPifNFelDOo62WzUXg/exec';
 
     // ----------------------------------------------------------------------
     // Booking drawer open/close (purely presentational - no booking logic here)
@@ -902,6 +919,7 @@ button.primary-btn:active:not(:disabled) { transform: translateY(0) scale(0.98);
         heroHeadingLine1: 'Expert wound care,',
         heroHeadingLine2: 'delivered to your doorstep.',
         heroSubtext: 'Book professional in-home wound dressing visits without the waiting room. Get a transparent estimate and schedule around your life.',
+        mottoGloss: "Your wound is our wound too — we treat it like it's our own.",
         heroBookBtn: 'Book Wound Dressing →',
         heroHowBtn: 'See How It Works',
         featuresHeading: 'Why Families Choose Lukaini',
@@ -995,6 +1013,7 @@ button.primary-btn:active:not(:disabled) { transform: translateY(0) scale(0.98);
         heroHeadingLine1: 'Penjagaan luka berkualiti,',
         heroHeadingLine2: 'kini terus di kediaman anda.',
         heroSubtext: 'Tempah lawatan cuci luka profesional di rumah tanpa perlu menunggu di klinik. Dapatkan anggaran kos yang jelas dan jadualkan mengikut masa anda.',
+        mottoGloss: 'Kami merawat luka anda seperti luka kami sendiri.',
         heroBookBtn: 'Tempah Cuci Luka →',
         heroHowBtn: 'Lihat Cara Ia Berfungsi',
         featuresHeading: 'Mengapa Keluarga Memilih Lukaini',
